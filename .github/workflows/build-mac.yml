@@ -1,0 +1,38 @@
+name: Build Mac App
+
+# electron-builder can't cross-compile a .dmg from Windows/Linux -- macOS
+# packaging (and code signing, if that's ever added) only works on an
+# actual Mac, hence a macOS runner here instead of building locally.
+# Run manually from the GitHub "Actions" tab -> "Build Mac App" -> "Run workflow".
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # package-lock.json pins electron@33 / electron-builder@24 -- newer
+      # majors of both ship ESM-only transitive deps that crash under
+      # require() (confirmed locally), so `npm ci` (not `npm install`) to
+      # get the exact tested versions rather than whatever a fresh resolve
+      # might pick up.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build .dmg
+        run: npm run dist:mac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yometel-dpp-mac
+          path: dist/*.dmg
+          retention-days: 14

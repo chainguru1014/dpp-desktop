@@ -1,0 +1,35 @@
+{
+  "name": "dpp-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DPP desktop app (Windows/Mac) — wraps the DPP web app in Electron. The main process connects directly to the Impinj R700 reader over LLRP/TCP (same llrpjs the app's native mobile build and the backend use), bypassing the backend and Tailscale entirely when this machine is on the reader's own local network.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "llrpjs": "^1.0.1"
+  },
+  "build": {
+    "appId": "com.yometel.dpp.desktop",
+    "productName": "Yometel DPP",
+    "files": [
+      "main.js",
+      "preload.js",
+      "impinjLlrpMain.js"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.business"
+    }
+  }
+}
