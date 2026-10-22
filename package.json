@@ -6,8 +6,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist:win": "electron-builder --win",
-    "dist:mac": "electron-builder --mac"
+    "dist:win": "electron-builder --win --publish=never",
+    "dist:mac": "electron-builder --mac --publish=never"
   },
   "devDependencies": {
     "electron": "^33.4.11",
@@ -19,6 +19,7 @@
   "build": {
     "appId": "com.yometel.dpp.desktop",
     "productName": "Yometel DPP",
+    "publish": null,
     "files": [
       "main.js",
       "preload.js",
