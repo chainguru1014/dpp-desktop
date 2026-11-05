@@ -11,8 +11,8 @@
     "dist:mac": "electron-builder --mac --publish=never",
     "dist:admin:win": "electron-builder --win --config electron-builder.admin.json --publish=never",
     "dist:admin:mac": "electron-builder --mac --config electron-builder.admin.json --publish=never",
-    "dist:linux": "electron-builder --linux --publish=never",
-    "dist:admin:linux": "electron-builder --linux --config electron-builder.admin.json --publish=never"
+    "dist:linux": "electron-builder --linux --publish=never -c.productName=yometel-dpp",
+    "dist:admin:linux": "electron-builder --linux --config electron-builder.admin.json --publish=never -c.productName=yometel-dpp-manager"
   },
   "devDependencies": {
     "electron": "^33.4.11",
@@ -52,7 +52,11 @@
       "icon": "build/icon.png",
       "category": "Office",
       "maintainer": "Yometel <koji.wada@yometel.com>",
-      "synopsis": "Yometel DPP web app with direct Impinj R700 access"
+      "synopsis": "Yometel DPP web app with direct Impinj R700 access",
+      "desktop": {
+        "Name": "Yometel DPP",
+        "StartupWMClass": "dpp-desktop"
+      }
     }
   },
   "homepage": "https://dpp.innosynch.com",

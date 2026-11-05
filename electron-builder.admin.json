@@ -42,6 +42,10 @@
     "icon": "build/icon.png",
     "category": "Office",
     "maintainer": "Yometel <koji.wada@yometel.com>",
-    "synopsis": "DPP admin site with direct Impinj R700 access"
+    "synopsis": "DPP admin site with direct Impinj R700 access",
+    "desktop": {
+      "Name": "Yometel DPP Manager",
+      "StartupWMClass": "dpp-manager-desktop"
+    }
   }
 }
