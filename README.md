@@ -1,4 +1,4 @@
-# DPP Desktop (Windows/Mac)
+# DPP Desktop (Windows/Mac/Linux)
 
 Two desktop apps share this code (`shell.js`):
 
@@ -36,9 +36,13 @@ npm run dist:win         # Yometel DPP, Windows .exe (nsis)
 npm run dist:mac         # Yometel DPP, macOS .dmg — must run on a Mac
 npm run dist:admin:win   # Yometel DPP Manager, Windows .exe
 npm run dist:admin:mac   # Yometel DPP Manager, macOS .dmg (Intel and Apple-chip) — must run on a Mac
+npm run dist:linux       # Yometel DPP, Ubuntu/Debian .deb (x64) — must run on Linux
+npm run dist:admin:linux # Yometel DPP Manager, Ubuntu/Debian .deb (x64) — must run on Linux
 ```
 
-GitHub Actions (`.github/workflows/build-mac.yml`) builds all four on every push to main; the installers are under the run's Artifacts. They are not code-signed, so Windows SmartScreen and macOS Gatekeeper warn on first open.
+GitHub Actions (`.github/workflows/build-mac.yml`) builds all six on every push to main; the installers are under the run's Artifacts. They are not code-signed, so Windows SmartScreen and macOS Gatekeeper warn on first open.
+
+On Ubuntu, install with `sudo apt install ./dpp-manager-desktop_1.0.0_amd64.deb` (the `./` matters), then open **Yometel DPP Manager** from the app menu. Remove with `sudo apt remove dpp-manager-desktop`. The DPP app is `dpp-desktop_1.0.0_amd64.deb` / `dpp-desktop`.
 
 ## Status
 

@@ -1,8 +1,8 @@
 name: Build desktop apps
 
 # Builds both desktop apps — Yometel DPP (main.js) and Yometel DPP Manager,
-# the admin site (admin-main.js) — for Windows (.exe) and Mac (.dmg, for
-# Intel and Apple-chip Macs). electron-builder can't make a .dmg on
+# the admin site (admin-main.js) — for Windows (.exe), Ubuntu/Debian Linux
+# (.deb) and Mac (.dmg, for Intel and Apple-chip Macs). electron-builder can't make a .dmg on
 # Windows/Linux, hence the Mac runner. The installers are unsigned.
 # Runs on every push to main, and from the GitHub "Actions" tab ->
 # "Build desktop apps" -> "Run workflow".
@@ -83,4 +83,60 @@ jobs:
         with:
           name: yometel-dpp-manager-windows
           path: dist/Yometel DPP Manager Setup *.exe
+          retention-days: 14
+
+  linux:
+    # .deb for Ubuntu/Debian (x64). electron-builder needs Linux tools (fpm)
+    # to make a .deb, so it can't be built on Windows. Install on Ubuntu with:
+    #   sudo apt install ./dpp-manager-desktop_1.0.0_amd64.deb
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Yometel DPP (.deb)
+        run: npm run dist:linux
+
+      - name: Build Yometel DPP Manager (.deb)
+        run: npm run dist:admin:linux
+
+      # Install each package the way a user would, then launch it on a
+      # virtual screen: still running after 20 s (exit 124) means it started.
+      - name: Smoke test — install and launch both apps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb
+          for deb in dist/*.deb; do
+            echo "== $deb"
+            sudo apt-get install -y -qq "./$deb"
+            pkg=$(dpkg-deb -f "$deb" Package)
+            bin=$(dpkg -L "$pkg" | grep -E '^/opt/[^/]+/[^/.]+$' | while read -r f; do [ -x "$f" ] && [ "$(basename "$f")" != chrome-sandbox ] && [ "$(basename "$f")" != chrome_crashpad_handler ] && echo "$f"; done | head -1)
+            echo "binary: $bin"
+            set +e
+            timeout 20 xvfb-run -a "$bin"
+            code=$?
+            set -e
+            if [ "$code" != 124 ]; then echo "::error::$pkg exited early with code $code"; exit 1; fi
+            echo "$pkg started OK"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yometel-dpp-linux
+          path: dist/dpp-desktop_*.deb
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yometel-dpp-manager-linux
+          path: dist/dpp-manager-desktop_*.deb
           retention-days: 14
