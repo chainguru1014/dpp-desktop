@@ -1,16 +1,22 @@
-name: Build Mac App
+name: Build desktop apps
 
-# electron-builder can't cross-compile a .dmg from Windows/Linux -- macOS
-# packaging (and code signing, if that's ever added) only works on an
-# actual Mac, hence a macOS runner here instead of building locally.
-# Run manually from the GitHub "Actions" tab -> "Build Mac App" -> "Run workflow".
+# Builds both desktop apps — Yometel DPP (main.js) and Yometel DPP Manager,
+# the admin site (admin-main.js) — for Windows (.exe) and Mac (.dmg, for
+# Intel and Apple-chip Macs). electron-builder can't make a .dmg on
+# Windows/Linux, hence the Mac runner. The installers are unsigned.
+# Runs on every push to main, and from the GitHub "Actions" tab ->
+# "Build desktop apps" -> "Run workflow".
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
-  build:
-    runs-on: macos-latest
-    timeout-minutes: 30
+  mac:
+    # GitHub's Intel Macs: its Apple-chip Macs are often fully booked, and
+    # electron-builder makes both Mac versions on either.
+    runs-on: macos-15-intel
+    timeout-minutes: 45
 
     steps:
       - uses: actions/checkout@v4
@@ -28,11 +34,53 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build .dmg
+      - name: Build Yometel DPP (.dmg)
         run: npm run dist:mac
+
+      - name: Build Yometel DPP Manager (.dmg)
+        run: npm run dist:admin:mac
 
       - uses: actions/upload-artifact@v4
         with:
           name: yometel-dpp-mac
-          path: dist/*.dmg
+          path: dist/Yometel DPP-*.dmg
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yometel-dpp-manager-mac
+          path: dist/Yometel DPP Manager-*.dmg
+          retention-days: 14
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Yometel DPP (.exe)
+        run: npm run dist:win
+
+      - name: Build Yometel DPP Manager (.exe)
+        run: npm run dist:admin:win
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yometel-dpp-windows
+          path: dist/Yometel DPP Setup *.exe
+          retention-days: 14
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yometel-dpp-manager-windows
+          path: dist/Yometel DPP Manager Setup *.exe
           retention-days: 14

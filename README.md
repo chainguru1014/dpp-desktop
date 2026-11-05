@@ -1,6 +1,11 @@
 # DPP Desktop (Windows/Mac)
 
-Electron shell around the DPP web app (`dpp.innosynch.com` by default). Everything works exactly like the browser version, with one difference: **RFID (Impinj R700) connects directly from this machine over LLRP/TCP**, bypassing the backend and Tailscale entirely — no different from the mobile app's native direct-connection mode, just running on a desktop instead of a phone.
+Two desktop apps share this code (`shell.js`):
+
+- **Yometel DPP** (`main.js`): the DPP web app, `dpp.innosynch.com` by default.
+- **Yometel DPP Manager** (`admin-main.js`, built with `electron-builder.admin.json`): the admin site, `admin.innosynch.com/admin` by default. Links to other websites open in the computer's browser. Its RFID Scan page (`frontend/src/features/rfid/rfidReader.js`) uses the same direct reader bridge.
+
+Each is an Electron shell around its site. Everything works exactly like the browser version, with one difference: **RFID (Impinj R700) connects directly from this machine over LLRP/TCP**, bypassing the backend and Tailscale entirely — no different from the mobile app's native direct-connection mode, just running on a desktop instead of a phone.
 
 ## How the RFID path works
 
@@ -22,12 +27,18 @@ Point it at a different build (e.g. a local dev server) with:
 DPP_DESKTOP_URL=http://localhost:3001 npm start
 ```
 
+The admin app: `npm run start:admin` (`DPP_ADMIN_DESKTOP_URL` to change its site).
+
 ## Build an installer
 
 ```bash
-npm run dist:win   # Windows .exe (nsis)
-npm run dist:mac   # macOS .dmg — must run on a Mac
+npm run dist:win         # Yometel DPP, Windows .exe (nsis)
+npm run dist:mac         # Yometel DPP, macOS .dmg — must run on a Mac
+npm run dist:admin:win   # Yometel DPP Manager, Windows .exe
+npm run dist:admin:mac   # Yometel DPP Manager, macOS .dmg (Intel and Apple-chip) — must run on a Mac
 ```
+
+GitHub Actions (`.github/workflows/build-mac.yml`) builds all four on every push to main; the installers are under the run's Artifacts. They are not code-signed, so Windows SmartScreen and macOS Gatekeeper warn on first open.
 
 ## Status
 

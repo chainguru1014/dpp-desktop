@@ -1,0 +1,25 @@
+{
+  "appId": "com.yometel.dpp.manager",
+  "productName": "Yometel DPP Manager",
+  "publish": null,
+  "extraMetadata": {
+    "name": "dpp-manager-desktop",
+    "main": "admin-main.js",
+    "description": "Yometel DPP Manager — the DPP admin site as a desktop app, with direct Impinj R700 access."
+  },
+  "files": [
+    "admin-main.js",
+    "shell.js",
+    "preload.js",
+    "impinjLlrpMain.js"
+  ],
+  "win": {
+    "target": "nsis",
+    "icon": "build/icon.png"
+  },
+  "mac": {
+    "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }],
+    "category": "public.app-category.business",
+    "icon": "build/icon.png"
+  }
+}
