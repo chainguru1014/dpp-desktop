@@ -343,23 +343,26 @@ async function connectReader() {
       await transact(client, new LLRPCore.CLOSE_CONNECTION(), TRANSACT_TIMEOUT_MS).catch(() => null);
     }
     await closeClient();
-    try {
-      await ensureConnected(true);
-    } catch (error) {
-      if (error?.code !== HELD_ELSEWHERE) throw error;
-      await closeClient();
+    // Up to three tries; between them the reader is told to drop whatever
+    // other device holds it. The page never sees "already connected".
+    for (let attempt = 0; ; attempt++) {
       try {
+        await ensureConnected(true);
+        break;
+      } catch (error) {
+        await closeClient();
+        if (error?.code !== HELD_ELSEWHERE) throw error;
+        if (attempt >= 2) {
+          throw new Error('Could not connect to the reader. Check the reader admin password in Reader settings, then try again.');
+        }
         await closeLlrpConnection({
           host: settings.ipAddress,
           username: settings.adminUsername || 'root',
           password: settings.adminPassword || FACTORY_ADMIN_PASSWORD,
-        });
-      } catch (shellError) {
-        throw new Error(`The reader is connected to another app or device, and it could not be freed: ${shellError.message}`);
+        }).catch((shellError) => console.warn('Impinj: could not free the reader:', shellError?.message || shellError));
+        // Let the reader finish dropping the old connection.
+        await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
       }
-      // Give the reader a moment to finish closing the old connection.
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      await ensureConnected(true);
     }
   } catch (error) {
     await closeClient();
