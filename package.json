@@ -19,7 +19,8 @@
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
-    "llrpjs": "^1.0.1"
+    "llrpjs": "^1.0.1",
+    "ssh2": "^1.16.0"
   },
   "build": {
     "appId": "com.yometel.dpp.desktop",
@@ -29,7 +30,8 @@
       "main.js",
       "shell.js",
       "preload.js",
-      "impinjLlrpMain.js"
+      "impinjLlrpMain.js",
+      "readerShell.js"
     ],
     "win": {
       "target": "nsis",

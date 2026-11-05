@@ -11,7 +11,8 @@
     "admin-main.js",
     "shell.js",
     "preload.js",
-    "impinjLlrpMain.js"
+    "impinjLlrpMain.js",
+    "readerShell.js"
   ],
   "win": {
     "target": "nsis",

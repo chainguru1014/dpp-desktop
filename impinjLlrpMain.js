@@ -15,6 +15,7 @@
 const { LLRPClient, LLRPCore } = require('llrpjs');
 const fs = require('fs');
 const path = require('path');
+const { closeLlrpConnection } = require('./readerShell');
 
 // Same two llrpjs bugs patched in impinjLlrpController.ts and
 // src/native/impinjRfid.ts — not specific to any one transport, so still
@@ -92,7 +93,15 @@ const DEFAULT_SETTINGS = {
   maxReconnectAttempts: 10,
   unlimitedReconnectAttempts: false,
   autoConnectOnStartup: true,
+  // The reader's own admin login (RShell over SSH), used only to free the
+  // reader when another device holds its LLRP connection. Kept in this
+  // computer's settings file; getSettings() never hands the password out.
+  adminUsername: 'root',
+  adminPassword: '',
 };
+// Impinj's factory admin password, tried when none has been set.
+const FACTORY_ADMIN_PASSWORD = 'impinj';
+const HELD_ELSEWHERE = 'READER_HELD_ELSEWHERE';
 
 // Set once from main.js via initSettingsPath(), after `app.getPath('userData')`
 // is available — can't call that at module-load time (before Electron's
@@ -281,8 +290,10 @@ async function closeClient() {
   }
 }
 
-async function ensureConnected() {
-  if (connected && client?.socketWritable) return client;
+// `fresh`: drop any connection this app already has and make a new one
+// (what the Connect button does), instead of reusing it.
+async function ensureConnected(fresh = false) {
+  if (!fresh && connected && client?.socketWritable) return client;
   loadSettings();
   if (!settings.ipAddress) {
     throw new Error('No reader IP address configured — set it in the reader settings.');
@@ -300,7 +311,9 @@ async function ensureConnected() {
     }
     const status = notif.getReaderEventNotificationData().getConnectionAttemptEvent()?.getStatus();
     if (status === 'Failed_A_Client_Initiated_Connection_Already_Exists') {
-      throw new Error('The reader is already connected to another app or device (it allows only one at a time). Disconnect it there, or restart the reader, then try again.');
+      const held = new Error('The reader is already connected to another app or device (it allows only one at a time).');
+      held.code = HELD_ELSEWHERE;
+      throw held;
     }
     if (status !== 'Success') {
       throw new Error(`Reader rejected the LLRP connection: ${status}`);
@@ -321,9 +334,33 @@ async function getStatus() {
   return buildStatus();
 }
 
+// Connect always wins: any connection this app already has is closed and
+// replaced, and if another device or app holds the reader, the reader is
+// told (through its admin shell) to drop that connection first.
 async function connectReader() {
   try {
-    await ensureConnected();
+    if (client?.socketWritable) {
+      await transact(client, new LLRPCore.CLOSE_CONNECTION(), TRANSACT_TIMEOUT_MS).catch(() => null);
+    }
+    await closeClient();
+    try {
+      await ensureConnected(true);
+    } catch (error) {
+      if (error?.code !== HELD_ELSEWHERE) throw error;
+      await closeClient();
+      try {
+        await closeLlrpConnection({
+          host: settings.ipAddress,
+          username: settings.adminUsername || 'root',
+          password: settings.adminPassword || FACTORY_ADMIN_PASSWORD,
+        });
+      } catch (shellError) {
+        throw new Error(`The reader is connected to another app or device, and it could not be freed: ${shellError.message}`);
+      }
+      // Give the reader a moment to finish closing the old connection.
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await ensureConnected(true);
+    }
   } catch (error) {
     await closeClient();
     recordError(describeLlrpError(error, 'Could not connect to the Impinj R700 reader over LLRP'));
@@ -406,19 +443,30 @@ async function clearTags() {
   tagsByEpc = new Map();
 }
 
+// The admin password stays in the main process: the page only learns
+// whether one is set.
+function publicSettings() {
+  const { adminPassword, ...rest } = settings;
+  return { ...rest, adminPasswordSet: !!adminPassword };
+}
+
 async function getSettings() {
-  return { ...loadSettings() };
+  loadSettings();
+  return publicSettings();
 }
 
 async function updateSettings(next) {
   loadSettings();
-  const addressChanged = next.ipAddress !== settings.ipAddress || next.port !== settings.port;
-  settings = { ...settings, ...next };
+  const { adminPasswordSet, adminPassword, ...rest } = next || {};
+  const addressChanged = rest.ipAddress !== settings.ipAddress || rest.port !== settings.port;
+  settings = { ...settings, ...rest };
+  // Blank means "keep the saved one"; a new value replaces it.
+  if (typeof adminPassword === 'string' && adminPassword !== '') settings.adminPassword = adminPassword;
   saveSettings();
   if (addressChanged && client?.socketWritable) {
     await closeClient();
   }
-  return { ...settings };
+  return publicSettings();
 }
 
 module.exports = {
