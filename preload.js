@@ -7,6 +7,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronImpinj', {
+  // 'win32' | 'darwin' | 'linux'. The admin site shows its RFID Scan page
+  // only when window.electronImpinj exists, i.e. only in a desktop app.
+  platform: process.platform,
   getStatus: () => ipcRenderer.invoke('impinj:getStatus'),
   connect: () => ipcRenderer.invoke('impinj:connect'),
   disconnect: () => ipcRenderer.invoke('impinj:disconnect'),

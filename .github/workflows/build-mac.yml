@@ -119,7 +119,9 @@ jobs:
             echo "== $deb"
             sudo apt-get install -y -qq "./$deb"
             pkg=$(dpkg-deb -f "$deb" Package)
-            bin=$(dpkg -L "$pkg" | grep -E '^/opt/[^/]+/[^/.]+$' | while read -r f; do [ -x "$f" ] && [ "$(basename "$f")" != chrome-sandbox ] && [ "$(basename "$f")" != chrome_crashpad_handler ] && echo "$f"; done | head -1)
+            # The package links its launcher into /usr/bin under its own name.
+            bin=/usr/bin/$pkg
+            test -x "$bin"
             echo "binary: $bin"
             set +e
             timeout 20 xvfb-run -a "$bin"
