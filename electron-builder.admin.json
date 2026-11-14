@@ -16,7 +16,7 @@
   ],
   "win": {
     "target": "nsis",
-    "icon": "build/icon.png"
+    "icon": "build/manager-icon.png"
   },
   "mac": {
     "target": [
@@ -29,7 +29,7 @@
       }
     ],
     "category": "public.app-category.business",
-    "icon": "build/icon.png"
+    "icon": "build/manager-icon.png"
   },
   "linux": {
     "target": [
@@ -40,7 +40,7 @@
         ]
       }
     ],
-    "icon": "build/icon.png",
+    "icon": "build/manager-icon.png",
     "category": "Office",
     "maintainer": "Yometel <koji.wada@yometel.com>",
     "synopsis": "DPP admin site with direct Impinj R700 access",
